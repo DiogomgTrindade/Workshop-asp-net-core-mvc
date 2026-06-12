@@ -32,7 +32,7 @@ namespace SalesWebMvc
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddDbContext<SalesWebMvcContext>(options =>
-            options.UseNpgsql(Configuration.GetConnectionString("SalesWebMvcContext")));
+                options.UseNpgsql(Configuration.GetConnectionString("SalesWebMvcContext")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
