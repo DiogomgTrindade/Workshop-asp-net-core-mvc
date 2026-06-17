@@ -1,0 +1,56 @@
+﻿@model SalesWebMvc.Models.ViewModels.SellerSalesViewModel
+
+@{
+    ViewData["Title"] = "Sales";
+}
+
+<h2>@ViewData["Title"]</h2>
+<h4>@Model.Seller.Name</h4>
+
+<p>
+    <a asp-action="Create" class="btn btn-default">Create New</a>
+</p>
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr class="success">
+            <th>
+                @Html.DisplayNameFor(model => model.SaleRecord.Date)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SaleRecord.Amount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SaleRecord.Status)
+            </th>
+            <th>
+
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.SalesRecords)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Date)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Amount)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Status)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" asp-controller="SalesRecords">Edit</a>
+                    <a asp-action="Details" asp-route-id="@item.Id" asp-controller="SalesRecords">Details</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" asp-controller="SalesRecords">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p>
+    <a asp-action="Index" asp-controller="Sellers" class="btn btn-default">Back to Sellers list</a>
+</p>

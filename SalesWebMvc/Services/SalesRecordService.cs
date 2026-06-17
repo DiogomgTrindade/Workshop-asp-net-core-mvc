@@ -58,5 +58,14 @@ namespace SalesWebMvc.Services
                     .ToListAsync();
         }
 
+        public async Task<List<SalesRecord>> FindAllBySellerIdAsync(int id)
+        {
+            return await _context.SalesRecord.Where(x => x.Seller.Id == id)
+                .Include(x => x.Seller)
+                .OrderBy(x => x.Status)
+                .ThenBy(x => x.Date)
+                .ToListAsync();
+        }
+
     }
 }
