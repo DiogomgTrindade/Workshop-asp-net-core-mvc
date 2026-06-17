@@ -133,6 +133,69 @@ namespace SalesWebMvc.Controllers
             return RedirectToAction(nameof(SellerSales), new {sellerId = sellerId});
         }
 
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+                return RedirectToAction(nameof(Error), "Id not found");
+
+            var saleRecord = await _salesRecordService.FindByIdAsync(id.Value);
+            if (saleRecord == null)
+                return RedirectToAction(nameof(Error), "SaleRecord not found");
+
+            var seller = await _sellerService.FindBySaleRecordId(saleRecord.Id);
+            if (seller == null)
+                return RedirectToAction(nameof(Error), "Seller not found");
+
+             var viewModel = new SellerSalesFormViewModel
+            {
+                SalesRecord = saleRecord,
+                Seller = seller,
+                SellerId = seller.Id
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(SalesRecord salesRecord, int sellerId)
+        {
+            var seller = await _sellerService.FindBySaleRecordId(salesRecord.Id);
+            if (seller == null)
+            {
+                return RedirectToAction(nameof(Error), "Seller id not found");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var viewModel = new SellerSalesFormViewModel
+                {
+                    SalesRecord = salesRecord,
+                    Seller = seller,
+                    SellerId = seller.Id
+                };
+
+                return View(viewModel);
+            }
+
+            if (salesRecord.Date > DateTime.UtcNow.Date)
+            {
+                ModelState.AddModelError("SalesRecord.Date", "The date cannot be in the future");
+
+                var viewModel = new SellerSalesFormViewModel
+                {
+                    SalesRecord = salesRecord,
+                    Seller = seller,
+                    SellerId = seller.Id
+                };
+
+                return View(viewModel);
+            }
+
+            await _salesRecordService.UpdateAsync(salesRecord);
+            return RedirectToAction(nameof(SellerSales), new { sellerId = sellerId });
+        }
+
         public IActionResult Error(string message)
         {
             var viewModel = new ErrorViewModel

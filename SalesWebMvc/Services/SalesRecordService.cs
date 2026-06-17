@@ -74,9 +74,23 @@ namespace SalesWebMvc.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpdateAsync(SalesRecord obj)
+        {
+            _context.Update(obj);
+
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<SalesRecord> FindBySellerIdAsync(int id)
         {
             return await _context.SalesRecord.Where(x => x.Seller.Id == id)
+                .Include(x => x.Seller)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<SalesRecord> FindByIdAsync(int id)
+        {
+            return await _context.SalesRecord.Where(x => x.Id == id)
                 .Include(x => x.Seller)
                 .FirstOrDefaultAsync();
         }

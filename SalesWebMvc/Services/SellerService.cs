@@ -29,6 +29,13 @@ namespace SalesWebMvc.Services
                 .FirstOrDefaultAsync(obj => obj.Id == id);
         }
 
+        public async Task<Seller> FindBySaleRecordId(int id)
+        {
+            return await _context.SalesRecord.Where(x => x.Id == id)
+                .Select(x => x.Seller)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task InsertAsync(Seller obj)
         {
             _context.Add(obj);
