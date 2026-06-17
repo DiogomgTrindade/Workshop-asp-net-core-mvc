@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SalesWebMvc.Models;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
 using System;
@@ -62,16 +63,16 @@ namespace SalesWebMvc.Controllers
             return View(result);
         }
 
-        public async Task<IActionResult> SellerSales(int? id)
+        public async Task<IActionResult> SellerSales(int? sellerId)
         {
-            if (id == null)
+            if (sellerId == null)
                 return RedirectToAction(nameof(Error), new { message = "Id not found" });
 
-            var salesRecords = await _salesRecordService.FindAllBySellerIdAsync(id.Value);
+            var salesRecords = await _salesRecordService.FindAllBySellerIdAsync(sellerId.Value);
             if (salesRecords.Count == 0 || !salesRecords.Any())
                 return RedirectToAction(nameof(Error), new { message = "Sales records not found" });
 
-            var seller = await _sellerService.FindByIdAsync(id.Value);
+            var seller = await _sellerService.FindByIdAsync(sellerId.Value);
             if (seller == null)
                 return RedirectToAction(nameof(Error), new { message = "Seller id not found" });
 
@@ -82,6 +83,54 @@ namespace SalesWebMvc.Controllers
             };
 
             return View(viewModel);
+        }
+
+        public async Task<IActionResult> Create(int? sellerId)
+        {
+            if (sellerId == null)
+                return RedirectToAction(nameof(Error), new { message = "Id not found" });
+
+            var seller = await _sellerService.FindByIdAsync(sellerId.Value);
+            if (seller == null)
+                return RedirectToAction(nameof(Error), new { message = "Seller not exists" });
+
+            var saleRecord = new SalesRecord
+            {
+                Date = DateTime.UtcNow,
+                Seller = seller
+            };
+
+            var viewModel = new SellerSalesFormViewModel
+            {
+                SalesRecord = saleRecord,
+                Seller = seller,
+                SellerId = sellerId.Value
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(SalesRecord salesRecord, int? sellerId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(salesRecord);
+            }
+
+            if (salesRecord.Date > DateTime.UtcNow.Date)
+            {
+                ModelState.AddModelError("Date", "The date cannot be in the future");
+                return View(salesRecord);
+            }
+
+            if (sellerId == null)
+                return RedirectToAction(nameof(Error), "Seller id not found");
+
+            salesRecord.Seller = await _sellerService.FindByIdAsync(sellerId.Value);
+            await _salesRecordService.InsertAsync(salesRecord);
+            return RedirectToAction(nameof(SellerSales), new {sellerId = sellerId});
         }
 
         public IActionResult Error(string message)

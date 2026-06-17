@@ -67,5 +67,19 @@ namespace SalesWebMvc.Services
                 .ToListAsync();
         }
 
+        public async Task InsertAsync(SalesRecord obj)
+        {
+            _context.Add(obj);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<SalesRecord> FindBySellerIdAsync(int id)
+        {
+            return await _context.SalesRecord.Where(x => x.Seller.Id == id)
+                .Include(x => x.Seller)
+                .FirstOrDefaultAsync();
+        }
+
     }
 }

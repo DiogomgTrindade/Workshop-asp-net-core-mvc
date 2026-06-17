@@ -8,10 +8,13 @@ namespace SalesWebMvc.Models
     {
         public int Id { get; set; }
 
+        [Required]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}")]
         public DateTime Date { get; set; }
 
+        [Required]
+        [Range(1.0, 999999.0, ErrorMessage = "{0} must be from {1} to {2}")]
         [DisplayFormat(DataFormatString = "{0:F2}")]
         public double Amount { get; set; }
 
