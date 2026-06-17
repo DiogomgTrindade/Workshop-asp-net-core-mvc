@@ -150,8 +150,9 @@ namespace SalesWebMvc.Controllers
             {
                 SalesRecord = saleRecord,
                 Seller = seller,
-                SellerId = seller.Id
-            };
+                SellerId = seller.Id,
+                Sellers = await _sellerService.FindAllAsync()
+             };
 
             return View(viewModel);
         }
@@ -162,9 +163,14 @@ namespace SalesWebMvc.Controllers
         {
             var seller = await _sellerService.FindBySaleRecordId(salesRecord.Id);
             if (seller == null)
-            {
                 return RedirectToAction(nameof(Error), "Seller id not found");
-            }
+
+            var sellerById = await _sellerService.FindByIdAsync(sellerId);
+            if (sellerById == null)
+                return RedirectToAction(nameof(Error), "Seller id not found");
+
+            if (sellerById.Id != seller.Id)
+                salesRecord.Seller = sellerById;
 
             if (!ModelState.IsValid)
             {
@@ -172,7 +178,8 @@ namespace SalesWebMvc.Controllers
                 {
                     SalesRecord = salesRecord,
                     Seller = seller,
-                    SellerId = seller.Id
+                    SellerId = seller.Id,
+                    Sellers = await _sellerService.FindAllAsync()
                 };
 
                 return View(viewModel);
@@ -186,7 +193,8 @@ namespace SalesWebMvc.Controllers
                 {
                     SalesRecord = salesRecord,
                     Seller = seller,
-                    SellerId = seller.Id
+                    SellerId = seller.Id,
+                    Sellers = await _sellerService.FindAllAsync()
                 };
 
                 return View(viewModel);
