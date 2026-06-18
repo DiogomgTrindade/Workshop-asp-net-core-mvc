@@ -56,6 +56,7 @@ namespace SalesWebMvc.Controllers
 
             if (await _itemService.NameExists(item.Name))
             {
+                ViewData["departmentId"] = item.DepartmentId;
                 ModelState.AddModelError("Name", "Product with this name already exists");
                 return View(item);
             }
@@ -63,6 +64,39 @@ namespace SalesWebMvc.Controllers
             await _itemService.Insert(item);
 
             return RedirectToAction("Index", new { departmentId = item.DepartmentId });
+        }
+
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+                return RedirectToAction(nameof(Error), "Id not found");
+
+            var item = await _itemService.FindById(id.Value);
+            if (item == null)
+                return RedirectToAction(nameof(Error), "Item not found");
+
+            ViewData["departmentId"] = item.DepartmentId;
+
+            return View(item);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Item obj)
+        {
+            if (!ModelState.IsValid)
+                return View(obj);
+
+            if (await _itemService.NameExistsForAnotherItem(obj.Name, obj.Id))
+            {
+                ViewData["departmentId"] = obj.DepartmentId;
+                ModelState.AddModelError("Name", "Product with this name already exists");
+                return View(obj);
+            }
+
+            await _itemService.Update(obj);
+
+            return RedirectToAction(nameof(Index), new { departmentId = obj.DepartmentId });
         }
 
         public IActionResult Error(string message)

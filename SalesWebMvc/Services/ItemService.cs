@@ -36,5 +36,22 @@ namespace SalesWebMvc.Services
         {
             return await _context.Item.AnyAsync(x => x.Name == name);
         }
+
+        public async Task<Item> FindById(int id)
+        {
+            return await _context.Item.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task Update(Item obj)
+        {
+            _context.Update(obj);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> NameExistsForAnotherItem(string name, int id)
+        {
+            return await _context.Item.AnyAsync(x => x.Name == name && x.Id != id);
+        }
     }
 }
