@@ -24,5 +24,17 @@ namespace SalesWebMvc.Services
                 .ThenBy(x => x.Price)
                 .ToListAsync();
         }
+
+        public async Task Insert(Item obj)
+        {
+            _context.Add(obj);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> NameExists(string name)
+        {
+            return await _context.Item.AnyAsync(x => x.Name == name);
+        }
     }
 }
