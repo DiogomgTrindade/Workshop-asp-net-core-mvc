@@ -20,5 +20,11 @@ namespace SalesWebMvc.Services
         {
             return await _context.Department.OrderBy(x => x.Name).ToListAsync();
         }
+
+        public async Task<Department> FindByIdAsync(int id)
+        {
+            return await _context.Department.Where(x => x.Id == id)
+                .FirstOrDefaultAsync();
+        }
     }
 }
