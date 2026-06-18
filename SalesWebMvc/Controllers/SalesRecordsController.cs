@@ -106,7 +106,8 @@ namespace SalesWebMvc.Controllers
             {
                 SalesRecord = saleRecord,
                 Seller = seller,
-                SellerId = sellerId.Value
+                SellerId = sellerId.Value,
+                Sellers = null
             };
 
             return View(viewModel);
@@ -118,13 +119,28 @@ namespace SalesWebMvc.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View(salesRecord);
+                var viewModel = new SellerSalesFormViewModel
+                {
+                    SalesRecord = salesRecord,
+                    Seller = await _sellerService.FindByIdAsync(sellerId.Value),
+                    SellerId = sellerId.Value,
+                    Sellers = null
+                };
+
+                return View(viewModel);
             }
 
             if (salesRecord.Date > DateTime.UtcNow.Date)
             {
-                ModelState.AddModelError("Date", "The date cannot be in the future");
-                return View(salesRecord);
+                ModelState.AddModelError("SalesRecord.Date", "The date cannot be in the future");
+                var viewModel = new SellerSalesFormViewModel
+                {
+                    SalesRecord = salesRecord,
+                    Seller = await _sellerService.FindByIdAsync(sellerId.Value),
+                    SellerId = sellerId.Value,
+                    Sellers = null
+                };
+                return View(viewModel);
             }
 
             if (sellerId == null)
