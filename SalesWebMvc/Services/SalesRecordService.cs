@@ -81,6 +81,13 @@ namespace SalesWebMvc.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task DeleteAsync(SalesRecord obj)
+        {
+            _context.Remove(obj);
+
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<SalesRecord> FindBySellerIdAsync(int id)
         {
             return await _context.SalesRecord.Where(x => x.Seller.Id == id)
@@ -92,6 +99,7 @@ namespace SalesWebMvc.Services
         {
             return await _context.SalesRecord.Where(x => x.Id == id)
                 .Include(x => x.Seller)
+                .Include(x => x.Seller.Department)
                 .FirstOrDefaultAsync();
         }
 

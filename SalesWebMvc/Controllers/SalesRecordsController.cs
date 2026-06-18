@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.Messaging;
 using SalesWebMvc.Models;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
+using SalesWebMvc.Services.Exceptions;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -202,6 +204,42 @@ namespace SalesWebMvc.Controllers
 
             await _salesRecordService.UpdateAsync(salesRecord);
             return RedirectToAction(nameof(SellerSales), new { sellerId = sellerId });
+        }
+
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+                return RedirectToAction(nameof(Error), "Id not found");
+
+            var saleRecord = await _salesRecordService.FindByIdAsync(id.Value);
+            if (saleRecord == null)
+                return RedirectToAction(nameof(Error), "Record not found");
+
+            return View(saleRecord);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            if (id == null)
+                return RedirectToAction(nameof(Error), "Id not found");
+
+            var saleRecord = await _salesRecordService.FindByIdAsync(id);
+            if (saleRecord == null)
+                return RedirectToAction(nameof(Error), "Record not found");
+
+            int sellerId = saleRecord.Seller.Id;
+
+            try
+            {
+                await _salesRecordService.DeleteAsync(saleRecord);
+                return RedirectToAction(nameof(SellerSales), new { sellerId = sellerId });
+            }
+            catch (IntegrityException e)
+            {
+                return RedirectToAction(nameof(Error), new { Message = e.Message});
+            }
         }
 
         public IActionResult Error(string message)
