@@ -1,6 +1,9 @@
 ﻿using SalesWebMvc.Models.Enums;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Xml.Schema;
 
 namespace SalesWebMvc.Models
 {
@@ -20,18 +23,30 @@ namespace SalesWebMvc.Models
 
         public SaleStatus Status { get; set; }
         public Seller Seller { get; set; }
+        public List<ItemCart> Items { get; set; } = new List<ItemCart>();
 
         public SalesRecord()
         {
         }
 
-        public SalesRecord(int id, DateTime date, double amount, SaleStatus status, Seller seller)
+        public SalesRecord(int id, DateTime date, SaleStatus status, Seller seller)
         {
             Id = id;
             Date = date;
-            Amount = amount;
+            Amount = TotalAmount();
             Status = status;
             Seller = seller;
+        }
+
+        public double TotalAmount ()
+        {
+            double total = 0;
+            foreach (var item in Items)
+            {
+                total += item.TotalValue();
+            }
+
+            return total;
         }
     }
 }
