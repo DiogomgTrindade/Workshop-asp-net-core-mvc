@@ -37,7 +37,7 @@ namespace SalesWebMvc.Services
             return await _context.Item.AnyAsync(x => x.Name == name);
         }
 
-        public async Task<Item> FindById(int id)
+        public async Task<Item> FindByIdAsync(int id)
         {
             return await _context.Item.FirstOrDefaultAsync(x => x.Id == id);
         }
@@ -52,6 +52,13 @@ namespace SalesWebMvc.Services
         public async Task<bool> NameExistsForAnotherItem(string name, int id)
         {
             return await _context.Item.AnyAsync(x => x.Name == name && x.Id != id);
+        }
+
+        public async Task Remove(Item obj)
+        {
+            _context.Remove(obj);
+
+            await _context.SaveChangesAsync();
         }
     }
 }

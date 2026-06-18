@@ -2,6 +2,7 @@
 using SalesWebMvc.Models;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
+using SalesWebMvc.Services.Exceptions;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -71,7 +72,7 @@ namespace SalesWebMvc.Controllers
             if (id == null)
                 return RedirectToAction(nameof(Error), "Id not found");
 
-            var item = await _itemService.FindById(id.Value);
+            var item = await _itemService.FindByIdAsync(id.Value);
             if (item == null)
                 return RedirectToAction(nameof(Error), "Item not found");
 
@@ -97,6 +98,40 @@ namespace SalesWebMvc.Controllers
             await _itemService.Update(obj);
 
             return RedirectToAction(nameof(Index), new { departmentId = obj.DepartmentId });
+        }
+
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+                return RedirectToAction(nameof(Error), "Id not found");
+
+            var item = await _itemService.FindByIdAsync(id.Value);
+            if (item == null)
+                return RedirectToAction(nameof(Error), "Item not found");
+
+            ViewData["departmentId"] = item.DepartmentId;
+            item.Department = await _departmentService.FindByIdAsync(item.DepartmentId);
+            return View(item);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var item = await _itemService.FindByIdAsync(id);
+            if (item == null)
+                return RedirectToAction(nameof(Error), "Item not found");
+
+            try
+            {
+                await _itemService.Remove(item);
+            }
+            catch (IntegrityException e)
+            {
+                return RedirectToAction(nameof(Error), e.Message);
+            }
+
+            return RedirectToAction(nameof(Index), new { departmentId = item.DepartmentId });
         }
 
         public IActionResult Error(string message)
