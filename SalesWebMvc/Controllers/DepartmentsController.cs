@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SalesWebMvc.Data;
 using SalesWebMvc.Models;
+using SalesWebMvc.Services;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,10 +11,11 @@ namespace SalesWebMvc.Controllers
     public class DepartmentsController : Controller
     {
         private readonly SalesWebMvcContext _context;
-
-        public DepartmentsController(SalesWebMvcContext context)
+        private readonly DepartmentService _departmentService;
+        public DepartmentsController(SalesWebMvcContext context, DepartmentService departmentService)
         {
             _context = context;
+            _departmentService = departmentService;
         }
 
         // GET: Departments
@@ -137,6 +139,13 @@ namespace SalesWebMvc.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var department = await _context.Department.FindAsync(id);
+
+            if (await _departmentService.HasSellers(department.Id))
+            {
+                ModelState.AddModelError("", "This department already have Sellers.");
+                return View(department);
+            }
+
             _context.Department.Remove(department);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

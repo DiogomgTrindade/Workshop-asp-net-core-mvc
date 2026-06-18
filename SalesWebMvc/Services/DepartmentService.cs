@@ -26,5 +26,10 @@ namespace SalesWebMvc.Services
             return await _context.Department.Where(x => x.Id == id)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<bool> HasSellers(int id)
+        {
+            return await _context.Seller.AnyAsync(x => x.DepartmentId == id);
+        }
     }
 }

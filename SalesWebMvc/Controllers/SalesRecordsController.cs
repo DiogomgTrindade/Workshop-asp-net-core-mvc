@@ -5,6 +5,7 @@ using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
 using SalesWebMvc.Services.Exceptions;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -72,7 +73,7 @@ namespace SalesWebMvc.Controllers
 
             var salesRecords = await _salesRecordService.FindAllBySellerIdAsync(sellerId.Value);
             if (salesRecords.Count == 0 || !salesRecords.Any())
-                return RedirectToAction(nameof(Error), new { message = "Sales records not found" });
+                salesRecords = new List<SalesRecord>();
 
             var seller = await _sellerService.FindByIdAsync(sellerId.Value);
             if (seller == null)
