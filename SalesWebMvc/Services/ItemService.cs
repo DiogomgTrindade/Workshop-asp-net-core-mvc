@@ -80,7 +80,7 @@ namespace SalesWebMvc.Services
                 {
                     Item = await FindByIdAsync(itemIds[i]),
                     ItemId = itemIds[i],
-                    Quantity = quantity[i]
+                    Quantity = quantity[i],
                 };
                 list.Add(itemCart);
             }

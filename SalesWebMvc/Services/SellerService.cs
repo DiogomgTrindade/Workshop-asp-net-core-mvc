@@ -22,6 +22,11 @@ namespace SalesWebMvc.Services
             return await _context.Seller.ToListAsync();
         }
 
+        public async Task<List<Seller>> FindAllByDepartmentAsync(int departmentId)
+        {
+            return await _context.Seller.Where(x => x.DepartmentId == departmentId).ToListAsync();
+        }
+
         public async Task<Seller> FindByIdAsync(int id)
         {
             return await _context.Seller

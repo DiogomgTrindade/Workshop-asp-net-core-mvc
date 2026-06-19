@@ -8,6 +8,7 @@ namespace SalesWebMvc.Models
         public int ItemId { get; set; }
         public Item Item { get; set; }
         public int Quantity { get; set; }
+        public int SalesRecordId { get; set; }
 
         public ItemCart()
         {

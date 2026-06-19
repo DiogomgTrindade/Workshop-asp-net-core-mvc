@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SalesWebMvc.Data;
 using SalesWebMvc.Models;
+using SalesWebMvc.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -100,13 +101,101 @@ namespace SalesWebMvc.Services
             return await _context.SalesRecord.Where(x => x.Id == id)
                 .Include(x => x.Seller)
                 .Include(x => x.Seller.Department)
-                .FirstOrDefaultAsync();
+                .Include(x => x.Items)
+                    .ThenInclude(x => x.Item)
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task AddItems(SalesRecord salesRecord,List<ItemCart> items)
+        public async Task AddItems(SalesRecord salesRecord, List<ItemCart> items, int? salesRecordId)
         {
+            if (salesRecordId != null)
+            {
+                foreach (var item in items)
+                {
+                    item.SalesRecordId = salesRecordId.Value;
+                }
+            }
+
             salesRecord.Items = items;
             await _context.ItemCart.AddRangeAsync(items);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ReplaceItemsAsync(SalesRecord salesRecord, int[] itemIds, int[] quantity)
+        {
+            for (int i = 0; i < itemIds.Length && i < quantity.Length; i++)
+            {
+
+                ItemCart item = new ItemCart
+                {
+                    SalesRecordId = salesRecord.Id,
+                    ItemId = itemIds[i],
+                    Item = await _context.Item.FirstOrDefaultAsync(x => x.Id == itemIds[i]),
+                    Quantity = quantity[i]
+                };
+                salesRecord.Items.Add(item);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateSaleWithItemsAsync(int salesRecordId, DateTime date,SaleStatus status,
+            int sellerId,int[] itemIds, int[] quantity)
+        {
+            var existingSale = await _context.SalesRecord
+                .Include(x => x.Items)
+                .FirstOrDefaultAsync(x => x.Id == salesRecordId);
+
+            if (existingSale == null)
+            {
+                throw new Exception("Sale record not found.");
+            }
+
+            var seller = await _context.Seller.FirstOrDefaultAsync(x => x.Id == sellerId);
+
+            if (seller == null)
+            {
+                throw new Exception("Seller not found.");
+            }
+
+            existingSale.Date = date;
+            existingSale.Status = status;
+            existingSale.Seller = seller;
+
+            _context.ItemCart.RemoveRange(existingSale.Items);
+
+            existingSale.Items = new List<ItemCart>();
+
+            double total = 0;
+
+            for (int i = 0; i < itemIds.Length && i < quantity.Length; i++)
+            {
+                if (itemIds[i] <= 0 || quantity[i] <= 0)
+                {
+                    continue;
+                }
+
+                var item = await _context.Item.FirstOrDefaultAsync(x => x.Id == itemIds[i]);
+
+                if (item == null)
+                {
+                    continue;
+                }
+
+                var itemCart = new ItemCart
+                {
+                    SalesRecordId = existingSale.Id,
+                    ItemId = item.Id,
+                    Quantity = quantity[i]
+                };
+
+                existingSale.Items.Add(itemCart);
+
+                total += item.Price * quantity[i];
+            }
+
+            existingSale.Amount = total;
 
             await _context.SaveChangesAsync();
         }
