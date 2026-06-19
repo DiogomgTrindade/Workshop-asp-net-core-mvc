@@ -16,11 +16,15 @@ namespace SalesWebMvc.Controllers
     {
         private readonly SalesRecordService _salesRecordService;
         private readonly SellerService _sellerService;
+        private readonly ItemService _itemService;
+        private readonly DepartmentService _departmentService;
 
-        public SalesRecordsController(SalesRecordService salesRecordService, SellerService sellerService)
+        public SalesRecordsController(SalesRecordService salesRecordService, SellerService sellerService, ItemService itemService, DepartmentService departmentService)
         {
             _salesRecordService = salesRecordService;
             _sellerService = sellerService;
+            _itemService = itemService;
+            _departmentService = departmentService;
         }
 
         public IActionResult Index()
@@ -103,12 +107,18 @@ namespace SalesWebMvc.Controllers
                 Seller = seller
             };
 
+            var itemList = await _itemService.GetAllItemsByDepartment(seller.DepartmentId);
+            if (itemList == null)
+                return RedirectToAction(nameof(Error), new { message = "No items availables" });
+
             var viewModel = new SellerSalesFormViewModel
             {
                 SalesRecord = saleRecord,
                 Seller = seller,
                 SellerId = sellerId.Value,
-                Sellers = null
+                Sellers = null,
+                Items = itemList,
+                Quantity = null
             };
 
             return View(viewModel);
@@ -116,16 +126,63 @@ namespace SalesWebMvc.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(SalesRecord salesRecord, int? sellerId)
+        public async Task<IActionResult> Create(SalesRecord salesRecord, int? sellerId, int[] itemIds, int[] quantity)
         {
+            if (sellerId == null)
+                return RedirectToAction(nameof(Error), "Seller id not found");
+
+            var seller = await _sellerService.FindByIdAsync(sellerId.Value);
+            var department = await _departmentService.FindByIdAsync(seller.DepartmentId);
+            var items = await _itemService.GetAllItemsByDepartment(department.Id);
+
+            if (itemIds == null || quantity == null)
+            {
+                ModelState.AddModelError("", "Please fill the items and the quantity.");
+
+                var viewModel = new SellerSalesFormViewModel
+                {
+                    SalesRecord = salesRecord,
+                    Seller = seller,
+                    SellerId = sellerId.Value,
+                    Sellers = null,
+                    Items = items,
+                    ItemIds = itemIds,
+                    Quantity = quantity
+                };
+
+                return View(viewModel);
+            }
+
+            if (itemIds.Length != quantity.Length)
+            {
+                ModelState.AddModelError("", "Please fill the items and the quantity.");
+
+                var viewModel = new SellerSalesFormViewModel
+                {
+                    SalesRecord = salesRecord,
+                    Seller = seller,
+                    SellerId = sellerId.Value,
+                    Sellers = null,
+                    Items = items,
+                    ItemIds = itemIds,
+                    Quantity = quantity
+                };
+
+                return View(viewModel);
+            }
+
+            ModelState.Remove("SalesRecord.Amount");
             if (!ModelState.IsValid)
             {
                 var viewModel = new SellerSalesFormViewModel
                 {
                     SalesRecord = salesRecord,
-                    Seller = await _sellerService.FindByIdAsync(sellerId.Value),
+                    Seller = seller,
                     SellerId = sellerId.Value,
-                    Sellers = null
+                    Sellers = null,
+                    Items = items,
+                    ItemIds = itemIds,
+                    Quantity = quantity
                 };
 
                 return View(viewModel);
@@ -137,18 +194,21 @@ namespace SalesWebMvc.Controllers
                 var viewModel = new SellerSalesFormViewModel
                 {
                     SalesRecord = salesRecord,
-                    Seller = await _sellerService.FindByIdAsync(sellerId.Value),
+                    Seller = seller,
                     SellerId = sellerId.Value,
-                    Sellers = null
+                    Sellers = null,
+                    Items = items,
+                    ItemIds = itemIds,
+                    Quantity = quantity
                 };
                 return View(viewModel);
             }
 
-            if (sellerId == null)
-                return RedirectToAction(nameof(Error), "Seller id not found");
-
-            salesRecord.Seller = await _sellerService.FindByIdAsync(sellerId.Value);
+            var itemCartList = await _itemService.CreateItemCartListAsync(itemIds, quantity);
+            salesRecord.Amount = _itemService.SumTotalCart(itemCartList);
+            salesRecord.Seller = seller;
             await _salesRecordService.InsertAsync(salesRecord);
+            await _salesRecordService.AddItems(salesRecord, itemCartList);
             return RedirectToAction(nameof(SellerSales), new {sellerId = sellerId});
         }
 

@@ -103,5 +103,13 @@ namespace SalesWebMvc.Services
                 .FirstOrDefaultAsync();
         }
 
+        public async Task AddItems(SalesRecord salesRecord,List<ItemCart> items)
+        {
+            salesRecord.Items = items;
+            await _context.ItemCart.AddRangeAsync(items);
+
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

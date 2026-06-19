@@ -19,14 +19,37 @@
                 <span asp-validation-for="SalesRecord.Date" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="SalesRecord.Amount" class="control-label"></label>
-                <input asp-for="SalesRecord.Amount" class="form-control" />
-                <span asp-validation-for="SalesRecord.Amount" class="text-danger"></span>
-            </div>
-            <div class="form-group">
                 <label asp-for="SalesRecord.Status" class="control-label"></label>
                 <select asp-for="SalesRecord.Status" asp-items="Html.GetEnumSelectList<SaleStatus>()" class="form-control"></select>
             </div>
+           
+            <div class="form-group">
+                <label class="control-label">Items</label>
+
+                <div id="cart-items">
+                    <div class="cart-item-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <select name="ItemIds[]" class="form-control item-select">
+                            <option value="">-- Select item --</option>
+                            @foreach (var item in Model.Items)
+                            {
+                                <option value="@item.Id">@item.Name</option>
+                            }
+                        </select>
+
+                        <input type="number"
+                               name="Quantity[]"
+                               class="form-control item-quantity"
+                               min="1"
+                               value="1"
+                               style="max-width: 100px;" />
+                    </div>
+                </div>
+
+                <button type="button" id="add-item" class="btn btn-default">
+                    Add more to cart
+                </button>
+            </div>
+
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-default" />
             </div>
@@ -39,3 +62,63 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
+
+<script>
+    const cartItemsContainer = document.getElementById('cart-items');
+    const addItemButton = document.getElementById('add-item');
+
+    addItemButton.addEventListener('click', function () {
+        const firstRow = document.querySelector('.cart-item-row');
+        const newRow = firstRow.cloneNode(true);
+
+        const select = newRow.querySelector('.item-select');
+        const quantity = newRow.querySelector('.item-quantity');
+
+        select.value = '';
+        quantity.value = 1;
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.textContent = 'Remove';
+        removeButton.className = 'btn btn-danger';
+
+        removeButton.addEventListener('click', function () {
+            newRow.remove();
+            updateDisabledOptions();
+        });
+
+        newRow.appendChild(removeButton);
+        cartItemsContainer.appendChild(newRow);
+
+        updateDisabledOptions();
+    });
+
+    cartItemsContainer.addEventListener('change', function (e) {
+        if (e.target.classList.contains('item-select')) {
+            updateDisabledOptions();
+        }
+    });
+
+    function updateDisabledOptions() {
+        const selects = document.querySelectorAll('.item-select');
+
+        const selectedValues = Array.from(selects)
+            .map(select => select.value)
+            .filter(value => value !== '');
+
+        selects.forEach(select => {
+            const currentValue = select.value;
+
+            Array.from(select.options).forEach(option => {
+                if (option.value === '') {
+                    option.disabled = false;
+                    return;
+                }
+
+                option.disabled =
+                    selectedValues.includes(option.value) &&
+                    option.value !== currentValue;
+            });
+        });
+    }
+</script>
