@@ -392,6 +392,18 @@ namespace SalesWebMvc.Controllers
             }
         }
 
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+                return RedirectToAction(nameof(Error), "Id not found");
+
+            var saleRecord = await _salesRecordService.FindByIdAsync(id.Value);
+            if (saleRecord == null)
+                return RedirectToAction(nameof(Error), "Sale record not found");
+
+            return View(saleRecord);
+        }
+
         public IActionResult Error(string message)
         {
             var viewModel = new ErrorViewModel
